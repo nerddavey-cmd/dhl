@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DHL Admin - Login</title>
+  <style>
+    /* ---------- Reset & Base ---------- */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "Helvetica Neue", Helvetica, Arial, "Segoe UI", sans-serif;
+      color: #333;
+      background: #f4f4f4;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; cursor: pointer; border: none; }
+    img { max-width: 100%; display: block; }
+
+    :root {
+      --dhl-yellow: #ffcc00;
+      --dhl-red: #d40511;
+      --dhl-dark: #1a1a1a;
+      --dhl-gray: #737373;
+      --dhl-light: #f4f4f4;
+      --dhl-border: #e0e0e0;
+      --shadow-sm: 0 2px 6px rgba(0,0,0,0.06);
+      --shadow-md: 0 6px 20px rgba(0,0,0,0.08);
+      --radius: 2px;
+    }
+
+    /* ---------- Login Layout ---------- */
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 4px;
+      box-shadow: var(--shadow-md);
+      padding: 40px 32px;
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .logo {
+      font-weight: 900;
+      font-size: 32px;
+      letter-spacing: -1px;
+      color: var(--dhl-red);
+      margin-bottom: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1;
+    }
+
+    .logo .stripe {
+      display: inline-block;
+      width: 10px;
+      height: 18px;
+      background: var(--dhl-red);
+      transform: skewX(-20deg);
+    }
+
+    .login-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--dhl-dark);
+      margin-bottom: 8px;
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      color: var(--dhl-gray);
+    }
+
+    /* ---------- Form Elements ---------- */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group:last-of-type {
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--dhl-dark);
+      margin-bottom: 8px;
+    }
+
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--dhl-border);
+      border-radius: var(--radius);
+      font-size: 15px;
+      transition: border-color .2s, box-shadow .2s;
+      outline: none;
+      background: #fff;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--dhl-red);
+      box-shadow: 0 0 0 3px rgba(212, 5, 17, 0.1);
+    }
+
+    /* ---------- Error Message ---------- */
+    .error-message {
+      display: none;
+      background: #ffe8e8;
+      border: 1px solid #ff6b6b;
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #c92a2a;
+      text-align: center;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    /* ---------- Login Button ---------- */
+    .login-button {
+      width: 100%;
+      padding: 12px 16px;
+      background: var(--dhl-red);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      border-radius: var(--radius);
+      transition: background .2s, transform .1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .login-button:hover {
+      background: #a5030d;
+    }
+
+    .login-button:active {
+      transform: scale(0.98);
+    }
+
+    .login-button.loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .spinner {
+      display: none;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+    }
+
+    .spinner.show {
+      display: block;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ---------- Helper Text ---------- */
+    .helper-text {
+      font-size: 12px;
+      color: var(--dhl-gray);
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .demo-credentials {
+      background: var(--dhl-light);
+      border: 1px solid var(--dhl-border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--dhl-gray);
+    }
+
+    .demo-credentials strong {
+      color: var(--dhl-dark);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .demo-credentials code {
+      background: #fff;
+      padding: 2px 4px;
+      border-radius: 2px;
+      font-family: monospace;
+      color: var(--dhl-red);
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <div class="logo">
+        <span class="stripe"></span>DHL
+      </div>
+      <h1 class="login-title">Admin Portal</h1>
+      <p class="login-subtitle">Sign in to your admin account</p>
+    </div>
+
+    <div class="error-message" id="errorMessage"></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Enter your email"
+          required
+          autocomplete="email"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          placeholder="Enter your password"
+          required
+          autocomplete="current-password"
+        >
+      </div>
+
+      <button type="submit" class="login-button" id="loginButton">
+        <span class="spinner" id="spinner"></span>
+        <span id="buttonText">Sign In</span>
+      </button>
+    </form>
+
+    <div class="demo-credentials">
+      <strong>Demo Credentials:</strong>
+      Email: <code>nerddavey@gmail.com</code><br>
+      Password: <code>Admin12345</code>
+    </div>
+  </div>
+
+  <script src="admin-auth.js"></script>
+  <script>
+    // Redirect if already authenticated
+    redirectIfAuthenticated();
+
+    // Form submission handler
+    const loginForm = document.getElementById('loginForm');
+    const errorMessage = document.getElementById('errorMessage');
+    const loginButton = document.getElementById('loginButton');
+    const spinner = document.getElementById('spinner');
+    const buttonText = document.getElementById('buttonText');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+
+    loginForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      // Clear previous errors
+      errorMessage.classList.remove('show');
+
+      // Show loading state
+      loginButton.classList.add('loading');
+      spinner.classList.add('show');
+      buttonText.textContent = 'Signing in...';
+
+      // Simulate network delay for better UX
+      setTimeout(function() {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
+
+        const result = login(email, password);
+
+        if (result.success) {
+          // Redirect to dashboard
+          window.location.href = 'admin-dashboard.html';
+        } else {
+          // Show error
+          errorMessage.textContent = result.message;
+          errorMessage.classList.add('show');
+          passwordInput.value = '';
+          passwordInput.focus();
+
+          // Reset button state
+          loginButton.classList.remove('loading');
+          spinner.classList.remove('show');
+          buttonText.textContent = 'Sign In';
+        }
+      }, 600);
+    });
+
+    // Clear error on input
+    emailInput.addEventListener('input', function() {
+      if (errorMessage.classList.contains('show')) {
+        errorMessage.classList.remove('show');
+      }
+    });
+
+    passwordInput.addEventListener('input', function() {
+      if (errorMessage.classList.contains('show')) {
+        errorMessage.classList.remove('show');
+      }
+    });
+  </script>
+</body>
+</html>
