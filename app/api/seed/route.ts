@@ -5,46 +5,24 @@ import { NextResponse } from 'next/server'
 import * as crypto from 'crypto'
 
 export async function POST() {
-  try {
-    // Check if admin user already exists
-    const existingUser = await db
-      .select()
-      .from(user)
-      .where(eq(user.email, 'nerddavey@gmail.com'))
-      .limit(1)
-
-    if (existingUser.length > 0) {
-      return NextResponse.json(
-        { message: 'Admin user already exists' },
-        { status: 200 }
-      )
-    }
-
-    // Create admin user - password will be set through the auth API
-    // For now, we'll just create the user record
-    const userId = crypto.randomUUID()
-
-    await db.insert(user).values({
-      id: userId,
-      name: 'Admin',
-      email: 'nerddavey@gmail.com',
-      emailVerified: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    })
-
+  // Check for authorization token
+  const authToken = process.env.SEED_AUTH_TOKEN
+  if (!authToken || !process.env.NODE_ENV) {
     return NextResponse.json(
-      {
-        message: 'Admin user created successfully',
-        userId,
-        email: 'nerddavey@gmail.com',
-      },
-      { status: 201 }
+      { error: 'Seed endpoint is disabled in production' },
+      { status: 403 }
+    )
+  }
+
+  try {
+    return NextResponse.json(
+      { message: 'Seed users through the sign-up page' },
+      { status: 200 }
     )
   } catch (error) {
     console.error('Seed error:', error)
     return NextResponse.json(
-      { error: 'Failed to seed database' },
+      { error: 'Failed to process request' },
       { status: 500 }
     )
   }
