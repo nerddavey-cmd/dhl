@@ -37,3 +37,41 @@ export async function getShipmentStats() {
 
   return stats
 }
+
+export async function createShipment(formData: {
+  trackingNumber: string
+  origin: string
+  destination: string
+  weight: string
+  status: 'pending' | 'in-transit' | 'delivered'
+  estimatedDelivery?: string
+}) {
+  const userId = await getUserId()
+  
+  // Validate tracking number is unique
+  const existing = await db
+    .select()
+    .from(shipments)
+    .where(eq(shipments.trackingNumber, formData.trackingNumber))
+  
+  if (existing.length > 0) {
+    throw new Error('Tracking number already exists')
+  }
+
+  const newShipment = await db
+    .insert(shipments)
+    .values({
+      userId,
+      trackingNumber: formData.trackingNumber,
+      origin: formData.origin,
+      destination: formData.destination,
+      weight: formData.weight,
+      status: formData.status,
+      estimatedDelivery: formData.estimatedDelivery ? new Date(formData.estimatedDelivery) : null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .returning()
+
+  return newShipment[0]
+}

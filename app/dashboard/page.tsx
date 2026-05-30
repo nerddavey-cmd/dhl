@@ -1,10 +1,81 @@
-import { auth } from '@/lib/auth'
-import { headers } from 'next/headers'
-import { redirect } from 'next/navigation'
-import { getShipments, getShipmentStats } from '@/app/actions/shipments'
-import DashboardContent from '@/components/dashboard-content'
+'use client'
 
-export default async function DashboardPage() {
+import { useState, useEffect } from 'react'
+import { getShipments, getShipmentStats } from '@/app/actions/shipments'
+import { CreateShipmentModal } from '@/components/create-shipment-modal'
+import { useRouter } from 'next/navigation'
+
+interface Shipment {
+  id: number
+  trackingNumber: string
+  origin: string
+  destination: string
+  status: 'pending' | 'in-transit' | 'delivered'
+  weight: string
+  estimatedDelivery: string | null
+}
+
+interface Stats {
+  total: number
+  inTransit: number
+  delivered: number
+  pending: number
+}
+
+export default function DashboardPage() {
+  const router = useRouter()
+  const [shipments, setShipments] = useState<Shipment[]>([])
+  const [stats, setStats] = useState<Stats>({ total: 0, inTransit: 0, delivered: 0, pending: 0 })
+  const [loading, setLoading] = useState(true)
+  const [userName, setUserName] = useState('')
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      const [shipmentsData, statsData] = await Promise.all([
+        getShipments(),
+        getShipmentStats(),
+      ])
+      setShipments(shipmentsData as Shipment[])
+      setStats(statsData as Stats)
+      
+      // Get user info from session
+      const response = await fetch('/api/auth/get-session')
+      if (response.ok) {
+        const { session } = await response.json()
+        if (session?.user) {
+          setUserName(session.user.name || session.user.email)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/sign-out', { method: 'POST' })
+    router.push('/sign-in')
+  }
+
+  const handleCreateSuccess = () => {
+    loadData()
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading...</p>
+      </div>
+    )
+  }
+
+  return (
   const session = await auth.api.getSession({ headers: await headers() })
 
   if (!session?.user) {
@@ -18,28 +89,20 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600 mt-1">Welcome, {session.user.name || session.user.email}</p>
-          </div>
-          <form
-            action={async () => {
-              'use server'
-              await auth.api.signOut({ headers: await headers() })
-              redirect('/sign-in')
-            }}
-          >
-            <button
-              type="submit"
-              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-            >
-              Logout
-            </button>
-          </form>
+    <div className="bg-white border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome, {userName}</p>
         </div>
+        <button
+          onClick={handleLogout}
+          className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+        >
+          Logout
+        </button>
       </div>
+    </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* KPI Cards */}
@@ -111,33 +174,42 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Admin Actions */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Admin Actions</h2>
-          </div>
-          <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition">
-              📋 View All Shipments
-            </button>
-            <button className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition">
-              ➕ Create New Shipment
-            </button>
-            <button className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition">
-              👥 Manage Users
-            </button>
-            <button className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition">
-              ⚙️ Settings
-            </button>
-            <button className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition">
-              📊 Reports
-            </button>
-            <button className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition">
-              🔔 Notifications
-            </button>
-          </div>
+      {/* Admin Actions */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-xl font-bold text-gray-900">Admin Actions</h2>
+        </div>
+        <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition">
+            📋 View All Shipments
+          </button>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition"
+          >
+            ➕ Create New Shipment
+          </button>
+          <button className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition">
+            👥 Manage Users
+          </button>
+          <button className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition">
+            ⚙️ Settings
+          </button>
+          <button className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition">
+            📊 Reports
+          </button>
+          <button className="p-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold rounded-lg transition">
+            🔔 Notifications
+          </button>
         </div>
       </div>
     </div>
+
+    <CreateShipmentModal 
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+      onSuccess={handleCreateSuccess}
+    />
+    </>
   )
 }
